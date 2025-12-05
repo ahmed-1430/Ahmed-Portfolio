@@ -131,7 +131,7 @@ export default function Hero() {
             </a>
 
             <a
-              href="/resume.pdf"
+              href="/Omar_Ahmed_Resume.pdf" target="_blank"
               className="px-7 py-3 rounded-full border border-gray-700 text-gray-300 font-semibold hover:bg-white/5 transition"
             >
               Resume

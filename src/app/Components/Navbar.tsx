@@ -27,7 +27,7 @@ export default function Navbar() {
           href="/"
           className="text-xl font-bold tracking-tight hover:text-primary transition focus:outline-none focus:ring-2 focus:ring-primary rounded-md"
         >
-          OmarAhmed
+          Ahmed
         </Link>
 
         {/* Desktop Links */}
