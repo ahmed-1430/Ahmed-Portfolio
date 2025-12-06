@@ -9,8 +9,11 @@ export default function Hero() {
   const heroRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLDivElement | null>(null);
   const glowRef = useRef<HTMLDivElement | null>(null);
-  const iconRefs = useRef<HTMLDivElement[]>([]);
+  const iconRefs = useRef<(HTMLDivElement | null)[]>([]);
   const textRef = useRef<HTMLSpanElement | null>(null);
+
+  const isMobile =
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
 
   useEffect(() => {
     let ctx: any;
@@ -23,88 +26,97 @@ export default function Hero() {
       gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
       ctx = gsap.context(() => {
-        // ----------------------------------------------------------
-        // IMAGE FLOAT + PARALLAX + PREMIUM TILT EFFECT
-        // ----------------------------------------------------------
+        // -----------------------------------------
+        // IMAGE FLOAT (lighter on mobile)
+        // -----------------------------------------
         gsap.to(imgRef.current, {
-          y: 15,
+          y: isMobile ? 8 : 15,
           duration: 3,
           repeat: -1,
           yoyo: true,
           ease: "easeInOut",
         });
 
-        gsap.to(imgRef.current, {
-          yPercent: -12,
-          ease: "none",
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-
-        // 3D TILT
-        const img = imgRef.current;
-        if (img) {
-          img.addEventListener("mousemove", (e: MouseEvent) => {
-            const rect = img.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-
-            gsap.to(img, {
-              rotateY: x / 40,
-              rotateX: -y / 40,
-              ease: "power3.out",
-              duration: 0.3,
-            });
-          });
-
-          img.addEventListener("mouseleave", () => {
-            gsap.to(img, {
-              rotateX: 0,
-              rotateY: 0,
-              duration: 0.5,
-              ease: "power3.out",
-            });
+        // PARALLAX (disable on mobile for stability)
+        if (!isMobile) {
+          gsap.to(imgRef.current, {
+            yPercent: -12,
+            ease: "none",
+            scrollTrigger: {
+              trigger: heroRef.current,
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+            },
           });
         }
 
-        // ----------------------------------------------------------
-        // MOUSE FOLLOW GLOW (fixed + smooth)
-        // ----------------------------------------------------------
+        // -----------------------------------------
+        // 3D TILT (desktop only)
+        // -----------------------------------------
+        if (!isMobile) {
+          const img = imgRef.current;
+          if (img) {
+            img.addEventListener("mousemove", (e: MouseEvent) => {
+              const rect = img.getBoundingClientRect();
+              const x = e.clientX - rect.left - rect.width / 2;
+              const y = e.clientY - rect.top - rect.height / 2;
+
+              gsap.to(img, {
+                rotateY: x / 40,
+                rotateX: -y / 40,
+                ease: "power3.out",
+                duration: 0.25,
+              });
+            });
+
+            img.addEventListener("mouseleave", () => {
+              gsap.to(img, {
+                rotateX: 0,
+                rotateY: 0,
+                duration: 0.4,
+                ease: "power3.out",
+              });
+            });
+          }
+        }
+
+        // -----------------------------------------
+        // MOUSE FOLLOW GLOW (smaller on mobile)
+        // -----------------------------------------
         const glow = glowRef.current;
         const hero = heroRef.current;
 
         if (hero && glow) {
-          const glowSize = 500;
+          const size = isMobile ? 280 : 500;
+
+          glow.style.width = `${size}px`;
+          glow.style.height = `${size}px`;
 
           const moveX = gsap.quickTo(glow, "x", {
-            duration: 0.4,
+            duration: 0.35,
             ease: "power3.out",
           });
 
           const moveY = gsap.quickTo(glow, "y", {
-            duration: 0.4,
+            duration: 0.35,
             ease: "power3.out",
           });
 
           hero.addEventListener("mousemove", (e: MouseEvent) => {
             const rect = hero.getBoundingClientRect();
-            const x = e.clientX - rect.left - glowSize / 2;
-            const y = e.clientY - rect.top - glowSize / 2;
-            moveX(x);
-            moveY(y);
+            moveX(e.clientX - rect.left - size / 2);
+            moveY(e.clientY - rect.top - size / 2);
           });
         }
 
-        // ----------------------------------------------------------
-        // FLOATING ICON ORBITS
-        // ----------------------------------------------------------
+        // -----------------------------------------
+        // FLOATING TECH ICONS (reduced motion mobile)
+        // -----------------------------------------
         iconRefs.current.forEach((el, i) => {
+          if (!el) return;
           gsap.to(el, {
-            y: i % 2 === 0 ? -20 : 20,
+            y: isMobile ? 5 : i % 2 === 0 ? -20 : 20,
             duration: 3 + i,
             repeat: -1,
             yoyo: true,
@@ -112,9 +124,9 @@ export default function Hero() {
           });
         });
 
-        // ----------------------------------------------------------
+        // -----------------------------------------
         // TYPING ROLE ANIMATION
-        // ----------------------------------------------------------
+        // -----------------------------------------
         if (textRef.current) {
           gsap.to(textRef.current, {
             text: "MERN Stack Developer · UI Engineer · Interaction Specialist",
@@ -126,13 +138,13 @@ export default function Hero() {
     })();
 
     return () => ctx?.revert();
-  }, []);
+  }, [isMobile]);
 
   return (
     <section
       id="hero"
       ref={heroRef}
-      className="min-h-screen flex items-center relative overflow-hidden pt-24"
+      className="min-h-screen flex items-center relative overflow-hidden pt-28 md:pt-24"
     >
       {/* BACKGROUND */}
       <div className="absolute inset-0 bg-linear-to-b from-black via-[#070707] to-black opacity-80" />
@@ -140,7 +152,7 @@ export default function Hero() {
       {/* Magical Cursor Glow */}
       <div
         ref={glowRef}
-        className="absolute w-[500px] h-[500px] bg-purple-500/30 blur-[200px] rounded-full pointer-events-none"
+        className="absolute bg-purple-500/30 blur-[200px] rounded-full pointer-events-none"
       />
 
       {/* Floating tech icons */}
@@ -155,13 +167,13 @@ export default function Hero() {
           <div
             key={i}
             ref={(el) => {
-              if (el) iconRefs.current[i] = el;
+              iconRefs.current[i] = el;
             }}
-
-            className="absolute w-12 h-12 opacity-40"
+            className="absolute opacity-40
+              w-8 h-8 md:w-12 md:h-12"
             style={{
-              top: `${20 + i * 12}%`,
-              left: `${10 + i * 15}%`,
+              top: isMobile ? `${15 + i * 14}%` : `${20 + i * 12}%`,
+              left: isMobile ? `${8 + i * 14}%` : `${10 + i * 15}%`,
             }}
           >
             <Image src={src} alt="icon" fill className="object-contain" />
@@ -170,7 +182,7 @@ export default function Hero() {
       </div>
 
       {/* CONTENT */}
-      <div className="w-11/12 md:w-10/12 mx-auto grid md:grid-cols-2 gap-12 relative z-10">
+      <div className="w-11/12 md:w-10/12 mx-auto grid md:grid-cols-2 gap-16 md:gap-12 relative z-10">
 
         {/* LEFT */}
         <motion.div
@@ -180,17 +192,17 @@ export default function Hero() {
         >
           <p className="text-sm text-gray-400">Hello there</p>
 
-          <h1 className="text-5xl font-extrabold mt-3 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-extrabold mt-3 leading-tight">
             <span className="bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
               I’m Omar Ahmed
             </span>
           </h1>
 
-          <h2 className="text-xl text-primary mt-1 font-medium">
+          <h2 className="text-lg md:text-xl text-primary mt-1 font-medium">
             <span ref={textRef}></span>
           </h2>
 
-          <p className="mt-5 text-gray-400 max-w-lg leading-relaxed text-[15px]">
+          <p className="mt-5 text-gray-400 max-w-lg leading-relaxed text-[15px] md:text-[16px]">
             I build high-performance, modern and visually rich applications with
             <span className="text-primary"> Next.js, React, Node, Express, MongoDB</span>
             — crafted with stunning animations, UX-focused interactions and clean architecture.
@@ -223,7 +235,7 @@ export default function Hero() {
         >
           <div
             ref={imgRef}
-            className="w-80 h-80 md:w-[360px] md:h-[360px] rounded-3xl overflow-hidden shadow-[0_0_80px_-10px_#8b5cf6] border border-white/10 bg-[#111] transform-gpu"
+            className="w-64 h-64 md:w-[360px] md:h-[360px] rounded-3xl overflow-hidden shadow-[0_0_80px_-10px_#8b5cf6] border border-white/10 bg-[#111] transform-gpu"
           >
             <Image
               src="/omar_dark.png"
@@ -235,7 +247,6 @@ export default function Hero() {
             />
           </div>
         </motion.div>
-
       </div>
     </section>
   );
