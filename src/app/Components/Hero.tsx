@@ -154,7 +154,10 @@ export default function Hero() {
         ].map((src, i) => (
           <div
             key={i}
-            ref={(el) => el && (iconRefs.current[i] = el)}
+            ref={(el) => {
+              if (el) iconRefs.current[i] = el;
+            }}
+
             className="absolute w-12 h-12 opacity-40"
             style={{
               top: `${20 + i * 12}%`,
@@ -168,7 +171,7 @@ export default function Hero() {
 
       {/* CONTENT */}
       <div className="w-11/12 md:w-10/12 mx-auto grid md:grid-cols-2 gap-12 relative z-10">
-        
+
         {/* LEFT */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

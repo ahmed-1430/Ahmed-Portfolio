@@ -6,7 +6,10 @@ import Image from 'next/image'
 import gsap from 'gsap'
 import { techGroups } from '../data/techs'
 
-const tabs = [
+// ---- FIX #1: Strong typing for tabs ----
+type TechGroupKey = keyof typeof techGroups
+
+const tabs: { key: TechGroupKey; label: string }[] = [
   { key: 'frontend', label: 'Frontend' },
   { key: 'backend', label: 'Backend' },
   { key: 'languages', label: 'Languages' },
@@ -15,8 +18,11 @@ const tabs = [
 ]
 
 export default function Technologies() {
-  const [active, setActive] = useState('frontend')
-  const iconsRef = useRef([])
+  // ---- FIX #2: Strongly typed active key ----
+  const [active, setActive] = useState<TechGroupKey>('frontend')
+
+  // ---- FIX #3: Typed ref array ----
+  const iconsRef = useRef<HTMLDivElement[]>([])
 
   //  GSAP Floating Animation
   useEffect(() => {
@@ -77,7 +83,12 @@ export default function Technologies() {
               {techGroups[active].map((t, i) => (
                 <motion.div
                   key={t.name}
-                  ref={(el) => (iconsRef.current[i] = el)}
+
+                  // ---- FIX #4: Correct ref assignment ----
+                  ref={(el) => {
+                    if (el) iconsRef.current[i] = el
+                  }}
+
                   whileHover={{ scale: 1.08 }}
                   className="p-5 rounded-xl bg-white/5 border border-white/10 
                              backdrop-blur-md hover:border-primary/60 
@@ -98,6 +109,7 @@ export default function Technologies() {
             </motion.div>
           </AnimatePresence>
         </div>
+
       </div>
     </section>
   )

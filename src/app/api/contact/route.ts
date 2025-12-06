@@ -1,11 +1,12 @@
 import nodemailer from "nodemailer";
+import { NextResponse } from "next/server";
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const { name, email, message } = await req.json();
 
     if (!name || !email || !message) {
-      return Response.json(
+      return NextResponse.json(
         { success: false, error: "Missing fields" },
         { status: 400 }
       );
@@ -15,16 +16,15 @@ export async function POST(req) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // your Gmail
-        pass: process.env.EMAIL_PASS, // App Password
+        user: process.env.EMAIL_USER,   // Gmail address
+        pass: process.env.EMAIL_PASS,   // Gmail App Password
       },
     });
 
     await transporter.sendMail({
-      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`, 
-      // Gmail requires sender = your real email
-      replyTo: email, // user email goes here
-      to: process.env.EMAIL_USER,
+      from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,       // send to yourself
+      replyTo: email,                   // user’s email
       subject: `New Message From ${name}`,
       text: `
 Name: ${name}
@@ -32,13 +32,13 @@ Email: ${email}
 
 Message:
 ${message}
-`,
+      `,
     });
 
-    return Response.json({ success: true });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Nodemailer Error:", err);
-    return Response.json(
+    return NextResponse.json(
       { success: false, error: "Email failed" },
       { status: 500 }
     );
