@@ -9,6 +9,8 @@ export default function Hero() {
   const heroRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLDivElement | null>(null);
   const glowRef = useRef<HTMLDivElement | null>(null);
+  const iconRefs = useRef<HTMLDivElement[]>([]);
+  const textRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     let ctx: any;
@@ -16,10 +18,22 @@ export default function Hero() {
     (async () => {
       const gsap = (await import("gsap")).default;
       const ScrollTrigger = (await import("gsap/ScrollTrigger")).default;
-      gsap.registerPlugin(ScrollTrigger);
+      const TextPlugin = (await import("gsap/TextPlugin")).default;
+
+      gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
       ctx = gsap.context(() => {
-        // IMAGE PARALLAX
+        // ----------------------------------------------------------
+        // IMAGE FLOAT + PARALLAX + PREMIUM TILT EFFECT
+        // ----------------------------------------------------------
+        gsap.to(imgRef.current, {
+          y: 15,
+          duration: 3,
+          repeat: -1,
+          yoyo: true,
+          ease: "easeInOut",
+        });
+
         gsap.to(imgRef.current, {
           yPercent: -12,
           ease: "none",
@@ -31,25 +45,83 @@ export default function Hero() {
           },
         });
 
-        // FLOATING IMAGE ANIMATION
-        gsap.to(imgRef.current, {
-          y: 18,
-          duration: 3,
-          repeat: -1,
-          yoyo: true,
-          ease: "easeInOut",
+        // 3D TILT
+        const img = imgRef.current;
+        if (img) {
+          img.addEventListener("mousemove", (e: MouseEvent) => {
+            const rect = img.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+
+            gsap.to(img, {
+              rotateY: x / 40,
+              rotateX: -y / 40,
+              ease: "power3.out",
+              duration: 0.3,
+            });
+          });
+
+          img.addEventListener("mouseleave", () => {
+            gsap.to(img, {
+              rotateX: 0,
+              rotateY: 0,
+              duration: 0.5,
+              ease: "power3.out",
+            });
+          });
+        }
+
+        // ----------------------------------------------------------
+        // MOUSE FOLLOW GLOW (fixed + smooth)
+        // ----------------------------------------------------------
+        const glow = glowRef.current;
+        const hero = heroRef.current;
+
+        if (hero && glow) {
+          const glowSize = 500;
+
+          const moveX = gsap.quickTo(glow, "x", {
+            duration: 0.4,
+            ease: "power3.out",
+          });
+
+          const moveY = gsap.quickTo(glow, "y", {
+            duration: 0.4,
+            ease: "power3.out",
+          });
+
+          hero.addEventListener("mousemove", (e: MouseEvent) => {
+            const rect = hero.getBoundingClientRect();
+            const x = e.clientX - rect.left - glowSize / 2;
+            const y = e.clientY - rect.top - glowSize / 2;
+            moveX(x);
+            moveY(y);
+          });
+        }
+
+        // ----------------------------------------------------------
+        // FLOATING ICON ORBITS
+        // ----------------------------------------------------------
+        iconRefs.current.forEach((el, i) => {
+          gsap.to(el, {
+            y: i % 2 === 0 ? -20 : 20,
+            duration: 3 + i,
+            repeat: -1,
+            yoyo: true,
+            ease: "easeInOut",
+          });
         });
 
-        // MOVING GLOW ANIMATION
-        gsap.to(glowRef.current, {
-          x: 40,
-          y: -30,
-          scale: 1.15,
-          duration: 6,
-          repeat: -1,
-          yoyo: true,
-          ease: "easeInOut",
-        });
+        // ----------------------------------------------------------
+        // TYPING ROLE ANIMATION
+        // ----------------------------------------------------------
+        if (textRef.current) {
+          gsap.to(textRef.current, {
+            text: "MERN Stack Developer · UI Engineer · Interaction Specialist",
+            duration: 3,
+            ease: "none",
+          });
+        }
       }, heroRef);
     })();
 
@@ -60,98 +132,95 @@ export default function Hero() {
     <section
       id="hero"
       ref={heroRef}
-      className="min-h-screen flex items-center relative overflow-hidden"
+      className="min-h-screen flex items-center relative overflow-hidden pt-24"
     >
-      {/* Subtle Dark Overlay */}
-      <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/50 to-black" />
+      {/* BACKGROUND */}
+      <div className="absolute inset-0 bg-linear-to-b from-black via-[#070707] to-black opacity-80" />
 
-      {/* Animated Glow */}
+      {/* Magical Cursor Glow */}
       <div
         ref={glowRef}
-        className="absolute top-1/3 right-10 w-80 h-80 bg-purple-500/20 rounded-full blur-[150px]"
+        className="absolute w-[500px] h-[500px] bg-purple-500/30 blur-[200px] rounded-full pointer-events-none"
       />
 
-      <div className="w-11/12  md:w-10/12 mx-auto md:px-6 grid md:grid-cols-2 gap-12 relative z-10">
+      {/* Floating tech icons */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[
+          "/react-original.svg",
+          "/Next_icons.svg",
+          "/Node_icons.svg",
+          "/Mongo_icons.svg",
+          "/greensock.svg",
+        ].map((src, i) => (
+          <div
+            key={i}
+            ref={(el) => el && (iconRefs.current[i] = el)}
+            className="absolute w-12 h-12 opacity-40"
+            style={{
+              top: `${20 + i * 12}%`,
+              left: `${10 + i * 15}%`,
+            }}
+          >
+            <Image src={src} alt="icon" fill className="object-contain" />
+          </div>
+        ))}
+      </div>
 
-        {/* LEFT CONTENT */}
+      {/* CONTENT */}
+      <div className="w-11/12 md:w-10/12 mx-auto grid md:grid-cols-2 gap-12 relative z-10">
+        
+        {/* LEFT */}
         <motion.div
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            show: {
-              opacity: 1,
-              y: 0,
-              transition: { staggerChildren: 0.15 },
-            },
-          }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
         >
-          <motion.p
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            className="text-sm text-gray-300"
-          >
-            Hello there 
-          </motion.p>
+          <p className="text-sm text-gray-400">Hello there</p>
 
-          <motion.h1
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            className="text-5xl font-extrabold mt-3 leading-tight"
-          >
+          <h1 className="text-5xl font-extrabold mt-3 leading-tight">
             <span className="bg-linear-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              I am Omar Ahmed
+              I’m Omar Ahmed
             </span>
-          </motion.h1>
+          </h1>
 
-          <motion.h2
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            className="text-xl text-gray-400 mt-2"
-          >
-            MERN Stack Developer • UI & Interaction Engineer
-          </motion.h2>
+          <h2 className="text-xl text-primary mt-1 font-medium">
+            <span ref={textRef}></span>
+          </h2>
 
-          <motion.p
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            className="mt-5 text-gray-400 max-w-lg leading-relaxed"
-          >
-            I craft smooth, modern, and interactive digital experiences.
-            Specialized in frontend dynamics, GSAP animations, elegant UI
-            systems, and full MERN stack applications.
-          </motion.p>
+          <p className="mt-5 text-gray-400 max-w-lg leading-relaxed text-[15px]">
+            I build high-performance, modern and visually rich applications with
+            <span className="text-primary"> Next.js, React, Node, Express, MongoDB</span>
+            — crafted with stunning animations, UX-focused interactions and clean architecture.
+          </p>
 
-          {/* CTA BUTTONS */}
-          <motion.div
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            className="mt-8 flex gap-4"
-          >
+          <div className="mt-8 flex gap-4">
             <a
               href="#contact"
               className="px-7 py-3 rounded-full bg-primary text-black font-semibold shadow-lg hover:scale-105 transition"
             >
-              Send Inquiry
+              Hire Me
             </a>
 
             <a
-              href="/Omar_Ahmed_Resume.pdf" target="_blank"
+              href="/Omar_Ahmed__Resume.pdf"
+              target="_blank"
               className="px-7 py-3 rounded-full border border-gray-700 text-gray-300 font-semibold hover:bg-white/5 transition"
             >
               Resume
             </a>
-          </motion.div>
+          </div>
         </motion.div>
 
-        {/* IMAGE SIDE */}
+        {/* RIGHT IMAGE + 3D */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}
           className="flex justify-center md:justify-end items-center relative"
         >
-          {/* Decorative Glow Outline */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 border border-purple-500/20 rounded-full blur-xl" />
-
           <div
             ref={imgRef}
-            className="w-80 h-80 md:w-100 md:h-100 rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_#8b5cf6] border border-white/10 bg-[#111]"
+            className="w-80 h-80 md:w-[360px] md:h-[360px] rounded-3xl overflow-hidden shadow-[0_0_80px_-10px_#8b5cf6] border border-white/10 bg-[#111] transform-gpu"
           >
             <Image
               src="/omar_dark.png"
@@ -163,6 +232,7 @@ export default function Hero() {
             />
           </div>
         </motion.div>
+
       </div>
     </section>
   );
